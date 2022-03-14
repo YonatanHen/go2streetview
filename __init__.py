@@ -27,7 +27,7 @@ import sys
 
 sys.path.append(os.path.dirname(__file__))
 
-site.addsitedir(os.path.join(os.path.dirname(__file__),'res'))
+site.addsitedir(os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/res'))
 
 def classFactory(iface):
     # load go2streetview class from file go2streetview

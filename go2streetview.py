@@ -18,9 +18,10 @@
  *                                                                         *
  ***************************************************************************/
 """
-# Import the PyQt and QGIS libraries
 
 from PyQt5 import Qt, QtCore, QtWidgets, QtGui, QtWebKit, QtWebKitWidgets, QtXml, QtNetwork, uic
+from PyQt5.QtWidgets import QLineEdit, QPushButton, QMessageBox
+from .geocoders import *
 from PyQt5.QtCore import QSettings, QTranslator, qVersion, QCoreApplication, Qt
 from qgis import core, utils, gui
 from qgis.utils import iface, qgsfunction, plugins
@@ -105,6 +106,7 @@ def get_streetview_url(value1, feature, parent):
 
     #try:
     fromP = sv.getNearestSVLocation(toP.x(),toP.y())
+    print(fromP)
     if fromP:
         location = '%f,%f' % (fromP.y(),fromP.x())
         head = heading(fromP,toP)
@@ -133,14 +135,14 @@ class go2streetview(gui.QgsMapTool):
         self.canvas = self.iface.mapCanvas()
         self.plugin_dir = os.path.dirname(__file__)
         pluginMetadata = configparser.ConfigParser()
-        pluginMetadata.read(os.path.join(self.plugin_dir , 'metadata.txt'))
+        pluginMetadata.read(os.path.join(self.plugin_dir, 'metadata.txt'))
         self.version = pluginMetadata.get('general', 'version')
 
         # initialize locale
         locale = QSettings().value('locale/userLocale')[0:2]
         locale_path = os.path.join(
             self.plugin_dir,
-            'i18n',
+            '../../OneDrive/שולחן העבודה/go2streetview/i18n',
             'go2streetview_{}.qm'.format(locale))
 
         if os.path.exists(locale_path):
@@ -174,8 +176,9 @@ class go2streetview(gui.QgsMapTool):
 
     def initGui(self):
         # Create actions that will start plugin configuration
-        self.StreetviewAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(os.path.dirname(__file__), 'res', 'icoStreetview.png')), \
-            self.tr("Click to open Google Street View"), self.iface.mainWindow())
+        self.StreetviewAction = QtWidgets.QAction(QtGui.QIcon(os.path.join(os.path.dirname(__file__),
+                                                                           '../../OneDrive/שולחן העבודה/go2streetview/res', 'icoStreetview.png')), \
+                                                  self.tr("Click to open Google Street View"), self.iface.mainWindow())
         #self.StreetviewAction = QtWidgets.QAction(QtGui.QIcon(":/plugins/go2streetview/res/icoStreetview.png"), \
         #    "Click to open Google Street View", self.iface.mainWindow())
         self.StreetviewAction.triggered.connect(self.StreetviewRun)
@@ -187,7 +190,9 @@ class go2streetview(gui.QgsMapTool):
         self.view = go2streetviewDialog()
         self.dumView = dumWidget()
         self.dumView.enter.connect(self.clickOn)
-        self.dumView.iconRif.setPixmap(QtGui.QPixmap(os.path.join(os.path.dirname(__file__), 'res', 'icoStreetview.png')))
+        self.dumView.pushButton.clicked.connect(lambda: self.FindButtonClicked(self.dumView.lineEdit.text()))
+        self.dumView.iconRif.setPixmap(QtGui.QPixmap(os.path.join(os.path.dirname(__file__),
+                                                                  '../../OneDrive/שולחן העבודה/go2streetview/res', 'icoStreetview.png')))
         #self.dumView.iconRif.setPixmap(QtGui.QPixmap(":/plugins/go2streetview/res/icoStreetview.png"))
         self.apdockwidget=QtWidgets.QDockWidget(self.tr("go2streetview") , self.iface.mainWindow() )
         self.apdockwidget.setObjectName("go2streetview")
@@ -203,7 +208,8 @@ class go2streetview(gui.QgsMapTool):
         self.view.SV.page().networkAccessManager().finished.connect(self.noSVConnectionsPending)
         self.view.SV.page().statusBarMessage.connect(self.catchJSevents)
         self.view.BE.page().statusBarMessage.connect(self.catchJSevents)
-        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath,"res","icoGMaps.png")))
+        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                 "../../OneDrive/שולחן העבודה/go2streetview/res", "icoGMaps.png")))
 
         self.view.enter.connect(self.clickOn)
         self.view.closed.connect(self.closeDialog)
@@ -269,22 +275,27 @@ class go2streetview(gui.QgsMapTool):
 
     def mkDirs(self):
         newDir = QtCore.QDir()
-        newDir.mkpath(os.path.join(self.dirPath,"tmp"))
-        newDir.mkpath(os.path.join(self.dirPath,"snapshots"))
+        newDir.mkpath(os.path.join(self.dirPath, "../../OneDrive/שולחן העבודה/go2streetview/tmp"))
+        newDir.mkpath(os.path.join(self.dirPath, "../../OneDrive/שולחן העבודה/go2streetview/snapshots"))
 
     def setButtonBarSignals(self):
         #Switch button
         self.view.btnSwitchView.clicked.connect(self.switchViewAction)
         #contextMenu
         contextMenu = QtWidgets.QMenu()
-        self.openInBrowserItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,"res","browser.png")),self.tr("Open in external browser"))
+        self.openInBrowserItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                                "../../OneDrive/שולחן העבודה/go2streetview/res", "browser.png")), self.tr("Open in external browser"))
         self.openInBrowserItem.triggered.connect(self.openInBrowserAction)
-        self.takeSnapshopItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,"res","images.png")),self.tr("Take a panorama snaphot"))
+        self.takeSnapshopItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                               "../../OneDrive/שולחן העבודה/go2streetview/res", "images.png")), self.tr("Take a panorama snaphot"))
         self.takeSnapshopItem.triggered.connect(self.takeSnapshopAction)
-        self.infoLayerItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,"res","markers.png")),self.tr("Add info layer"))
+        self.infoLayerItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                            "../../OneDrive/שולחן העבודה/go2streetview/res", "markers.png")), self.tr("Add info layer"))
         self.infoLayerItem.triggered.connect(self.infoLayerAction)
-        self.printItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,"res","print.png")),self.tr("Print keymap leaflet"))
+        self.printItem = contextMenu.addAction(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                        "../../OneDrive/שולחן העבודה/go2streetview/res", "print.png")), self.tr("Print keymap leaflet"))
         self.printItem.triggered.connect(self.printAction)
+
         contextMenu.addSeparator()
         optionsMenu = contextMenu.addMenu(self.tr("Options"))
         self.showCoverage = optionsMenu.addAction(self.tr("Show streetview coverage"))
@@ -326,7 +337,8 @@ class go2streetview(gui.QgsMapTool):
         self.showWebInspector.triggered.connect(self.showWebInspectorAction)
         self.aboutItem = contextMenu.addAction(self.tr("About plugin"))
         self.aboutItem.triggered.connect(self.aboutAction)
-        self.view.btnMenu.setIcon(QtGui.QIcon(os.path.join(self.dirPath,"res","down.png")))
+        self.view.btnMenu.setIcon(QtGui.QIcon(os.path.join(self.dirPath,
+                                                           "../../OneDrive/שולחן העבודה/go2streetview/res", "down.png")))
         self.view.btnMenu.setMenu(contextMenu)
         self.view.btnMenu.setPopupMode(QtWidgets.QToolButton.InstantPopup)
 
@@ -408,9 +420,21 @@ class go2streetview(gui.QgsMapTool):
         return
 
     def getNearestSVLocation(self,lon,lat):
-        js = "this.getNearestSVLocation(%f,%f)" %(lon,lat)
         if not self.pointWgs84:
+            #from wgs84 to our version
+            geom = core.QgsGeometry(core.QgsPoint(lon, lat))
+            sourceCrs = core.QgsCoordinateReferenceSystem(4326)
+            destCrs = core.QgsCoordinateReferenceSystem(3857)
+            tr = core.QgsCoordinateTransform(sourceCrs, destCrs, core.QgsProject.instance())
+            geom.transform(tr)
+
             self.pointWgs84 = core.QgsPointXY(lon,lat)
+            print(self.pointWgs84)
+            #send to the specific location and refresh
+            self.canvas.setCenter(core.QgsPointXY(geom.get()))
+            self.canvas.refresh()
+            #fix js
+            js = "this.getNearestSVLocation(%f,%f)" % (self.pointWgs84.x(), self.pointWgs84.y())
             self.heading = 0
             self.StreetviewRun()
             self.openSVDialog()
@@ -443,12 +467,12 @@ class go2streetview(gui.QgsMapTool):
             painter.begin(img)
             webview.page().mainFrame().render(painter)
             painter.end()
-            img.save(os.path.join(self.dirPath,"tmp",imgFile))
+            img.save(os.path.join(self.dirPath, "../../OneDrive/שולחן העבודה/go2streetview/tmp", imgFile))
         # portion of code from: http://gis.stackexchange.com/questions/77848/programmatically-load-composer-from-template-and-generate-atlas-using-pyqgis
 
         # Load template
         myLayout = core.QgsLayout(core.QgsProject.instance())
-        myFile = os.path.join(os.path.dirname(__file__), 'res','go2SV_A4.qpt')
+        myFile = os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/res', 'go2SV_A4.qpt')
         myTemplateFile = open(myFile, 'rt')
         myTemplateContent = myTemplateFile.read()
         myTemplateFile.close()
@@ -474,21 +498,23 @@ class go2streetview(gui.QgsMapTool):
 
         #CURSOR
         mapFrameCursor = sip.cast(myLayout.itemById('CAMERA'),core.QgsLayoutItemPicture)
-        mapFrameCursor.setPicturePath(os.path.join(os.path.dirname(__file__),'res', 'camera.svg'))
+        mapFrameCursor.setPicturePath(os.path.join(os.path.dirname(__file__),
+                                                   '../../OneDrive/שולחן העבודה/go2streetview/res', 'camera.svg'))
         mapFrameCursor.setItemRotation(head+self.canvas.rotation(), adjustPosition=True)
 
         #NORTH
         mapFrameNorth = sip.cast(myLayout.itemById('NORTH'),core.QgsLayoutItemPicture)
-        mapFrameNorth.setPicturePath(os.path.join(os.path.dirname(__file__),'res', 'NorthArrow_01.svg'))
+        mapFrameNorth.setPicturePath(os.path.join(os.path.dirname(__file__),
+                                                  '../../OneDrive/שולחן העבודה/go2streetview/res', 'NorthArrow_01.svg'))
         mapFrameNorth.setPictureRotation(self.canvas.rotation())
 
         #STREETVIEW AND GM PICS
         if self.view.SV.isHidden():
-            LargePic = os.path.join(os.path.dirname(__file__),'tmp', 'tmpBE.png')
-            SmallPic = os.path.join(os.path.dirname(__file__),'tmp', 'tmpSV.png')
+            LargePic = os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/tmp', 'tmpBE.png')
+            SmallPic = os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/tmp', 'tmpSV.png')
         else:
-            LargePic = os.path.join(os.path.dirname(__file__),'tmp', 'tmpSV.png')
-            SmallPic = os.path.join(os.path.dirname(__file__),'tmp', 'tmpBE.png')
+            LargePic = os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/tmp', 'tmpSV.png')
+            SmallPic = os.path.join(os.path.dirname(__file__), '../../OneDrive/שולחן העבודה/go2streetview/tmp', 'tmpBE.png')
 
         SVFrame = sip.cast(myLayout.itemById('LARGE'),core.QgsLayoutItemPicture)
         SVFrame.setPicturePath(LargePic)
@@ -681,7 +707,8 @@ class go2streetview(gui.QgsMapTool):
             self.aperture.reset()
             self.disableControlShape()
             try:
-                self.StreetviewAction.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), 'res', 'icoStreetview_gray.png')))
+                self.StreetviewAction.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__),
+                                                                       '../../OneDrive/שולחן העבודה/go2streetview/res', 'icoStreetview_gray.png')))
                 #self.StreetviewAction.setIcon(QtGui.QIcon(":/plugins/go2streetview/res/icoStreetview_gray.png"))
                 #self.StreetviewAction.setDisabled(True)
             except:
@@ -689,7 +716,8 @@ class go2streetview(gui.QgsMapTool):
 
         else:
             self.StreetviewAction.setEnabled(True)
-            self.StreetviewAction.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__), 'res', 'icoStreetview.png')))
+            self.StreetviewAction.setIcon(QtGui.QIcon(os.path.join(os.path.dirname(__file__),
+                                                                   '../../OneDrive/שולחן העבודה/go2streetview/res', 'icoStreetview.png')))
             self.setPosition()
             if self.infoBoxManager.isEnabled() and self.apdockwidget.widget() != self.dumView:
                 infoLayer = self.infoBoxManager.getInfolayer()
@@ -707,7 +735,7 @@ class go2streetview(gui.QgsMapTool):
 
     def refreshWidget(self, new_lon, new_lat):
         if self.actualPOV['lat'] != 0.0:
-            self.gswDialogUrl = os.path.join(self.dirPath,'res','g2sv.html?lat=' + str(new_lat) + "&long=" + str(new_lon) + "&width=" + str(self.viewWidth) + "&height=" + str(self.viewHeight) + "&heading=" + str(self.heading) + "&APIkey=" + self.APIkey)
+            self.gswDialogUrl = os.path.join(self.dirPath, '../../OneDrive/שולחן העבודה/go2streetview/res', 'g2sv.html?lat=' + str(new_lat) + "&long=" + str(new_lon) + "&width=" + str(self.viewWidth) + "&height=" + str(self.viewHeight) + "&heading=" + str(self.heading) + "&APIkey=" + self.APIkey)
             self.view.SV.load(QtCore.QUrl(pathlib.Path(QtCore.QDir.fromNativeSeparators(self.gswDialogUrl)).as_uri()))
 
     def endRefreshWidget(self):
@@ -728,7 +756,8 @@ class go2streetview(gui.QgsMapTool):
         # Procedure to operate switch to google maps dialog set
         self.view.BE.show()
         self.view.SV.hide()
-        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath, "res", "icoStreetview.png")))
+        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                 "../../OneDrive/שולחן העבודה/go2streetview/res", "icoStreetview.png")))
         #self.view.btnPrint.setDisabled(True)
         self.takeSnapshopItem.setDisabled(True)
         self.view.setWindowTitle("Google maps oblique")
@@ -737,7 +766,8 @@ class go2streetview(gui.QgsMapTool):
         # Procedure to operate switch to streetview dialog set
         self.view.BE.hide()
         self.view.SV.show()
-        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath, "res", "icoGMaps.png")))
+        self.view.btnSwitchView.setIcon(QtGui.QIcon(os.path.join(self.dirPath,
+                                                                 "../../OneDrive/שולחן העבודה/go2streetview/res", "icoGMaps.png")))
         #self.view.btnPrint.setDisabled(False)
         self.takeSnapshopItem.setDisabled(False)
         self.view.setWindowTitle("Google Street View")
@@ -852,13 +882,13 @@ class go2streetview(gui.QgsMapTool):
         self.viewHeight=self.view.size().height()
         self.viewWidth=self.view.size().width()
 
-        self.gswDialogUrl = os.path.join(pathlib.Path(self.dirPath).as_uri(),'res','g2sv.html?lat=' + str(
+        self.gswDialogUrl = os.path.join(pathlib.Path(self.dirPath).as_uri(),
+                                         '../../OneDrive/שולחן העבודה/go2streetview/res', 'g2sv.html?lat=' + str(
             self.pointWgs84.y()) + "&long=" + str(self.pointWgs84.x()) + "&width=" + str(
             self.viewWidth) + "&height=" + str(self.viewHeight) + "&heading=" + str(
             self.heading) + "&APIkey=" + self.APIkey)
-
         self.headingGM = math.trunc(round (self.heading / 90) * 90)
-        self.bbeUrl = os.path.join(pathlib.Path(self.dirPath).as_uri(), "res","g2gm.html?lat=" + str(self.pointWgs84.y()) + "&long=" + str(
+        self.bbeUrl = os.path.join(pathlib.Path(self.dirPath).as_uri(), "../../OneDrive/שולחן העבודה/go2streetview/res", "g2gm.html?lat=" + str(self.pointWgs84.y()) + "&long=" + str(
             self.pointWgs84.x()) + "&width=" + str(self.viewWidth) + "&height=" + str(
             self.viewHeight) + "&zoom=19&heading=" + str(self.headingGM) + "&APIkey=" + self.APIkey)
 
@@ -953,7 +983,7 @@ class go2streetview(gui.QgsMapTool):
         bufferLayer.commitChanges()
         core.QgsMessageLog.logMessage("markers context rebuilt", tag="go2streetview", level=core.Qgis.Info)
         #StreetView markers
-        tmpfile = os.path.join(self.dirPath,"tmp","tmp_markers.geojson")
+        tmpfile = os.path.join(self.dirPath, "../../OneDrive/שולחן העבודה/go2streetview/tmp", "tmp_markers.geojson")
         core.QgsVectorFileWriter.writeAsVectorFormat (bufferLayer, tmpfile,"UTF8",toWGS84,"GeoJSON")
         with open(tmpfile) as f:
             geojson = f.read().replace('\n','')
@@ -1025,7 +1055,7 @@ class go2streetview(gui.QgsMapTool):
         bufferLayer.commitChanges()
         core.QgsMessageLog.logMessage("line context rebuilt: %s features" % bufferLayer.featureCount(), tag="go2streetview", level=core.Qgis.Info)
         #StreetView lines
-        tmpfile = os.path.join(self.dirPath, "tmp", "tmp_lines.geojson")
+        tmpfile = os.path.join(self.dirPath, "../../OneDrive/שולחן העבודה/go2streetview/tmp", "tmp_lines.geojson")
         core.QgsVectorFileWriter.writeAsVectorFormat(bufferLayer, tmpfile,"UTF8", toWGS84, "GeoJSON")
         with open(tmpfile) as f:
             geojson = f.read().replace('\n', '')
@@ -1090,3 +1120,13 @@ class go2streetview(gui.QgsMapTool):
         self.page.settings().setAttribute(QtWebKit.QWebSettings.DeveloperExtrasEnabled, True)
         self.webInspector = QtWebKitWidgets.QWebInspector(self)
         self.webInspector.setPage(self.page)
+
+    def FindButtonClicked(self,address):
+        """
+        This function is used as 'Find'  button click event listener.
+        """
+        sv = plugins['go2streetview']
+        #Must encode to bytes before sending because string canno't decode in geocode function
+        geoCode = OsmGeoCoder().geocode(str.encode(address))
+        sv.getNearestSVLocation(float(geoCode[0][1][0]), float(geoCode[0][1][1]))
+

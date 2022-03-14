@@ -2,7 +2,7 @@
 Makefile
 *.log
 help/
-i18n/
+../../OneDrive/שולחן העבודה/go2streetview/i18n/
 .idea/
 .idea/*
 .DS_Store

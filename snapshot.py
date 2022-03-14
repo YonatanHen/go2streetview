@@ -57,7 +57,7 @@ class snapShot():
     def sessionDirectory(self):
         path = os.path.dirname( os.path.abspath( __file__ ) )
         #datetime.datetime.now().strftime("%Y-%m-%d")
-        sDir = os.path.join(self.path,'snapshots')
+        sDir = os.path.join(self.path, '../../OneDrive/שולחן העבודה/go2streetview/snapshots')
         if not os.path.isdir(sDir):
             os.makedirs(sDir)
         return sDir
@@ -169,7 +169,7 @@ class snapShot():
             if lay.name() == "Streetview_snapshots_log":
                 testIfLayPresent = True
         if not testIfLayPresent:
-            vlayer.loadNamedStyle(os.path.join(self.path,"snapshotStyle.qml"))
+            vlayer.loadNamedStyle(os.path.join(self.path, "snapshotStyle.qml"))
             #self.iface.actionFeatureAction().trigger()
             core.QgsProject.instance().addMapLayer(vlayer)
             set=QtCore.QSettings()
